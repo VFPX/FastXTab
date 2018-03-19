@@ -1,0 +1,155 @@
+Demo 1
+Un table cu intrarile si iesirile anuale ale unor companii
+
+RAND(-1)
+CREATE CURSOR cTest (cName C(10),nYear I,nInput N(10,2),nOutput N(10,2))
+FOR lnC=1 TO 5
+	FOR lnY=2010 TO 2014
+		INSERT INTO cTest VALUES ('Company '+TRANSFORM(m.lnC),m.lnY,100000*RAND(),100000*RAND())
+	NEXT
+NEXT
+
+BROWSE
+
+
+1 Tabel pivot cu iesirile distribuite pe ani si companii
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+
+oXtab.RunXtab()
+
+Rezultatul este un table cu nume aleator
+
+2  Tabel pivot cu iesirile distribuite pe ani si companii, urmat de afisearea (browse) rezultatului
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+
+oXtab.lBrowseAfter = .T.
+
+oXtab.RunXtab()
+
+3 Alegerea unui nume pentru tabelul rezultat
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+oXtab.lBrowseAfter = .T.
+
+oXtab.cOutFile="xx" && Numele tabelului rezultat este xx
+
+oXtab.RunXtab()
+
+4 Rezultatul este cursor, nu tabel
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+
+5 Afiseaza Null (daca e cazul)
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.lDisplayNulls = .F.
+
+oXtab.RunXtab()
+
+6 Inchide tabelul sursa 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+
+oXtab.lCloseTable = .F.
+
+oXtab.RunXtab()
+
+7 Adauga un rand cu totaluri
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+8 Afiseaza atat intrarile cat si iesirile
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+
+oXtab.nMultiDataField = 2
+oXtab.acDataField[1] = 'nInput' && celulele contin intrarile
+oXtab.acDataField[2] = 'nOutput' && celulele contin iesirile
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+9 Afiseaza trei coloane : nInput, nOutput and nInput - nOutput 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele sunt anii
+
+oXtab.nMultiDataField = 3
+oXtab.acDataField[1] = 'nInput' && celulele contin intrarile
+oXtab.acDataField[2] = 'nOutput' && celulele contin iesirile
+oXtab.anFunctionType[3] = 6
+oXtab.acFunctionExp[3] = 'SUM(nInput - nOutput)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+* De remarcat utilizarea functiei SUM()

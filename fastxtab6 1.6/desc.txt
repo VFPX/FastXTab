@@ -1,0 +1,89 @@
+Properties
+1 Input cursor / table
+- lCloseTable 
+.T. the cursor / table which holds the data source is closed
+
+2 Output cursor / table
+- lCursorOnly 
+.T. The result is stored in a cursor, otherwise in a free table
+- cOutFile
+Name of the cursor / table which holds the result
+- lDisplayNulls
+.T. / .F. => Set null ON / OFF
+- lBrowseAfter
+Specifies whether to open a Browse window on the cross tab output
+
+3 CrossTab
+a Rows
+- cRowField 
+Field name / Field expression for rows (group)
+- nRowField 
+Field position (row number in AFIELDS(,cSource)) for rows (group)
+
+- cPageField (optional)
+Field name / Field expression for rows supergroup
+- nPageField 
+Field position (row number in AFIELDS(,cSource)) for rows supergroup
+
+b COlumns
+- cColField
+Field name / Field expression for columns (group)
+- nColField 
+Field position (row number in AFIELDS(,cSource)) for columns (group)
+
+c Each column field holds a single data (cell) column
+- cDataField 
+Field name for cells
+- nDataField 
+Field position (row number in AFIELDS(,cSource)) for cells
+- nFunctionType
+Aggregate function used for cells
+1 Sum 2 Count 3 Avg 4 Min 5 Max 6 Custom
+- cFunctionExp
+The expression used for cells, When nFunctionType=6
+Ignored if nFunctionType<>6
+
+d Some columns contains more than a single data (cell) column
+- nMultiDataField (default=1)
+Number of data (cell) columns
+- acDataField 
+Array with field names for cells
+- anDataField 
+Array with field positions (row number in AFIELDS(,cSource)) for cells
+- anFunctionType
+Array with aggregate functions used for cells
+1 Sum 2 Count 3 Avg 4 Min 5 Max 6 Custom
+- acFunctionExp
+Array with the expressions used for cells, When anFunctionType()=6
+
+e Miscelaneous
+- nAvePrec
+Decimal precision when nFunctionType = 3 (average)
+- cCondition
+Expression for a where condition
+- cHaving
+Expression for a having condition
+- nRowField2
+When nRowField2 = 0 and !empty(cRowField), fastxtab distribute cells by columns and rows (accoding to cRowField and cColField)
+Ignored When nRowField2 # 0 or empty(This.cRowField)
+- lTotalRows
+When .T. a supplementary row with totals is added
+
+
+Notes
+There are three type of outputs
+1 When nRowField2 = 0 and !empty(cRowField), fastxtab distribute cells by columns and rows (accoding to cRowField and cColField) ;  no aggregate functions are performed
+If nFunctionType / anFunctionType = 6, cells contains the expression from cFunctionExp / acFunctionExp
+Otherwise, cells contains the field from cDataField 
+
+2 When nRowField = 0 and EMPTY(cRowField), fastxtab distribute cells by columns (accoding to cColField) ;  no aggregate functions are performed
+If nFunctionType / anFunctionType = 6, cells contains the expression from cFunctionExp / acFunctionExp
+Otherwise, cells contains the field from cDataField 
+
+3 Otherwise fastxtab applies aggregate functions and distribute results by columns and rows (accoding to cPageField, cRowField and cColField)
+If nFunctionType / anFunctionType = 1, cells contains SUM(cDataField)
+If nFunctionType / anFunctionType = 2, cells contains COUNT(cDataField)
+If nFunctionType / anFunctionType = 3, cells contains AVERAGE(cDataField)
+If nFunctionType / anFunctionType = 4, cells contains MAX(cDataField)
+If nFunctionType / anFunctionType = 5, cells contains MIN(cDataField)
+If nFunctionType / anFunctionType = 6, cells contains the expression from cFunctionExp / acFunctionExp (must be valid expression from the point of the aggregation)

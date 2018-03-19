@@ -1,0 +1,70 @@
+Demo 3
+Un table cu sportivi si rezultatele de la antrenamente
+
+RAND(-1)
+CREATE CURSOR cTest (cName C(10),nResult N(8,2))
+FOR lnA=1 TO 5
+	FOR lnR=1 TO 20
+		IF RAND()>0.2
+			INSERT INTO cTest VALUES ('Athlete '+TRANSFORM(m.lnA),100*RAND())
+		ENDIF
+	NEXT
+NEXT
+
+BROWSE
+
+1 Grupeaza (distribuie) rezultatele fiecarui sportiv pe zeci de secunde
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = ''
+oXtab.cRowField = 'cName' && randurile contin atletii
+oXtab.nRowField2 = 0 && distribuire
+
+oXtab.cColField = 'floor(nResult/10)' && coloanele sunt zecile de secunde
+oXtab.cDataField = 'nResult' && celulele contin rezultatele
+
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+
+2 Grupeaza (distribuie) pe zeci de secunde, fara a tine cont de sportiv
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = '' 
+oXtab.cRowField = '' && randurile sunt conteaza
+oXtab.nRowField = 0 && distribuire
+
+oXtab.cColField = 'floor(nResult/10)' && coloanele sunt zecile de secunde
+oXtab.cDataField = 'nResult' && celulele contin rezultatele
+
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+
+3 Grupeaza (distribuie) rezultatele fiecarui sportiv pe zeci de secunde ;  in fiecare celula sunt afisate doar fractiunile de secunda
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = ''
+oXtab.cRowField = 'cName' && randurile contin atletii
+oXtab.nRowField2 = 0 && distribuire
+
+oXtab.cColField = 'floor(nResult/10)' && coloanele sunt zecile de secunde
+
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'nResult/10 - floor(nResult/10)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+

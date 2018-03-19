@@ -1,0 +1,70 @@
+Demo 3
+A table with athletes and their training results
+
+RAND(-1)
+CREATE CURSOR cTest (cName C(10),nResult N(8,2))
+FOR lnA=1 TO 5
+	FOR lnR=1 TO 20
+		IF RAND()>0.2
+			INSERT INTO cTest VALUES ('Athlete '+TRANSFORM(m.lnA),100*RAND())
+		ENDIF
+	NEXT
+NEXT
+
+BROWSE
+
+1 Group each athlete's results by tens of seconds
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = ''
+oXtab.cRowField = 'cName' && rows are athletes
+oXtab.nRowField2 = 0 && distribution
+
+oXtab.cColField = 'floor(nResult/10)' && columns are tens results
+oXtab.cDataField = 'nResult' && cells are results
+
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+
+2  Group the results by tens of seconds, regardless whose are
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = '' && 'pages' are years
+oXtab.cRowField = '' && rows are irrelevant
+oXtab.nRowField = 0 && distribution
+
+oXtab.cColField = 'floor(nResult/10)' && columns are tens results
+oXtab.cDataField = 'nResult' && cells are results
+
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+
+3 Group each athlete's results by tens of seconds, In each column, only the fraction is shown
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = ''
+oXtab.cRowField = 'cName' && rows are athletes
+oXtab.nRowField2 = 0 && distribution
+
+oXtab.cColField = 'floor(nResult/10)' && columns are tens results
+
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'nResult/10 - floor(nResult/10)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+

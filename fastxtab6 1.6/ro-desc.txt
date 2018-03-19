@@ -1,0 +1,89 @@
+Proprietati
+1 Cursor / tabel sursa
+- lCloseTable 
+.T. cursorul / tabelul sursa este inchis
+
+2 Cursor / table rezultat
+- lCursorOnly 
+.T. Rezultatul este salvat intr-un cursor, altfel intr-un tabel liber (free table)
+- cOutFile
+Numele cursorului / tabelului cu rezultate
+- lDisplayNulls
+.T. / .F. => Set null ON / OFF
+- lBrowseAfter
+Precizeaza daca la sfarsitul operatiei de crosstab se afiseaza o fereastra Browse cu rezultatele
+
+3 CrossTab
+a Randurile
+- cRowField 
+Nume camp / expresie pentru (grupul de) randuri
+- nRowField 
+Pozitia (numar rand din matricea AFIELDS(,cSource)) pentru (grupul de) randuri
+
+- cPageField (facultativ)
+Nume camp / expresie pentru (supragrupul de) randuri
+- nPageField 
+Pozitia (numar rand din matricea AFIELDS(,cSource)) pentru (supragrupul de) randuri
+
+b Coloanele
+- cColField
+Nume camp / expresie pentru (grupul de) coloane
+- nColField 
+Pozitia (numar rand din matricea AFIELDS(,cSource)) pentru (grupul de) coloane
+
+c Fiecare coloana definita anterior contine o un singur set de celule (o singura coloana)
+- cDataField 
+Nume camp pentru celule
+- nDataField 
+Pozitia (numar rand din matricea AFIELDS(,cSource)) pentru celule
+- nFunctionType
+Functia de agregare folosita la calcularea (obtinerea) celulelor
+1 Sum 2 Count 3 Avg 4 Min 5 Max 6 Definit prin cFunctionExp
+- cFunctionExp
+Expresia folosita la calculul celulelor pentru nFunctionType = 6
+Ignorat daca nFunctionType <> 6
+
+d Anumite coloane contin mai multe seturi (coloane) de celule
+- nMultiDataField (implicit = 1)
+Numar de coloane de date (celule)
+- acDataField 
+Matrice cu numele campurilor celulelor
+- anDataField 
+Matrice cu pozitiile (numar rand din matricea AFIELDS(,cSource)) pentru celule
+- anFunctionType
+Matrice cu functiile de agregare folosite la calcularea (obtinerea) celulelor
+1 Sum 2 Count 3 Avg 4 Min 5 Max 6 Definit prin cFunctionExp
+- acFunctionExp
+Matrice cu expresiile folosite la calculul celulelor pentru anFunctionType() = 6
+
+e Diverse
+- nAvePrec
+Numarul de zecimale (precizia) pentru cazul nFunctionType = 3 medie artimetica)
+- cCondition
+Expresia conditiei where
+- cHaving
+Expresia conditiei having
+- nRowField2
+Daca nRowField2 = 0 and !empty(cRowField), fasxtab distribuie celulele pe linii si coloane, in concordanta cu cRowField and cColField
+Daca nRowField2 # 0 or empty(This.cRowField) este ignorat
+- lTotalRows
+Daca este .T., la sfarsitul cursorului / tabelului rezultat este adaugat un rand cu totaluri
+
+
+Observatii
+Sunt trei feluri de rezultate
+1 Daca nRowField2 = 0 and !empty(cRowField), fasxtab distribuie celulele pe linii si coloane, in concordanta cu cRowField and cColField ; nu sunt aplicate functii de agregare
+Daca nFunctionType / anFunctionType = 6, celulele contin expresiile din cFunctionExp / acFunctionExp
+In caz conbtrar, celulele contin campul din cDataField 
+
+2 Daca nRowField = 0 and EMPTY(cRowField), fasxtab distribuie celulele pe coloane, in concordanta cu cColField ; nu sunt aplicate functii de agregare
+Daca nFunctionType / anFunctionType = 6, celulele contin expresiile din cFunctionExp / acFunctionExp
+In caz conbtrar, celulele contin campul din cDataField 
+
+3 In toate celelate variante fastxtab aplica functiile de agregare si distribuie celulele pe linii si coloane, in concordanta cu cRowField and cColField
+Daca nFunctionType / anFunctionType = 1, celulele contin SUM(cDataField)
+Daca nFunctionType / anFunctionType = 2, celulele contin COUNT(cDataField)
+Daca nFunctionType / anFunctionType = 3, celulele contin AVERAGE(cDataField)
+Daca nFunctionType / anFunctionType = 4, celulele contin MAX(cDataField)
+Daca nFunctionType / anFunctionType = 5, celulele contin MIN(cDataField)
+Daca nFunctionType / anFunctionType = 6, celulele contin expresiile din cFunctionExp / acFunctionExp (expresiile trebuie sa fie valide din punctul de vedere al agregarii)

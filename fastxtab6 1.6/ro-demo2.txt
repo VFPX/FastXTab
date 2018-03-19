@@ -1,0 +1,205 @@
+Demo 2
+Un tabel cu intrarile si iesirile lunare pe parcursul mai multor ani ale unor companii. In unele luni lipsesc date
+
+RAND(-1)
+CREATE CURSOR cTest (cName C(10),nYear I,nInput N(10,2),nOutput N(10,2))
+FOR lnC=1 TO 5
+	FOR lnY=2010 TO 2014
+		INSERT INTO cTest VALUES ('Company '+TRANSFORM(m.lnC),m.lnY,100000*RAND(),100000*RAND())
+	NEXT
+NEXT
+
+BROWSE
+
+1 Obtinerea intrarilor totale pe fiecare an / companie
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele contin anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+2 Obtinerea intrarilor medii pe fiecare an / companie
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele contin anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+
+oXtab.nFunctionType = 3
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+3 Numarul lunilor cu date per companie / an
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele contin anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+
+oXtab.nFunctionType = 2
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+4 Obtinerea intrarilor lunare minime pe fiecare an / companie
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele contin anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+
+oXtab.nFunctionType = 4
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+5 Obtinerea intrarilor lunare maxime pe fiecare an / companie
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+oXtab.cColField = 'nYear' && coloanele contin anii
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+
+oXtab.nFunctionType = 5
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+6 Obtinerea intrarilor totale pe fiecare an / semestru
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+
+oXtab.cColField = 'PADL(nYear,4)+[_sem]+iif(nMonth<7,[1],[2])' && coloanele sunt semestrele
+
+oXtab.cDataField = 'nInput' && celulele contin intrarile
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+7 Obtinerea mediilor trimestriale ale nInputs - nOutputs 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && randurile contin numele companiilor
+
+oXtab.cColField = 'PADL(nYear , 4) + [_qtr] + PADL(1 + FLOOR((nMonth - 1) / 3) , 1)' && coloanele sunt trimestrele
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+8 Obtinerea mediilor trimestriale ale nInputs - nOutputs, dar coloanele sunt companiile si randurile sunt trimestrele
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = 'nYear' && "paginile" sunt anii
+oXtab.cRowField = '1 + FLOOR((nMonth - 1) / 3)' && randurile sunt trimestrele
+oXtab.cColField = 'cName' && coloanele sunt numele companiilor
+
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+9 Obtinerea mediilor trimestriale < 0 ale nInputs - nOutputs, dar coloanele sunt companiile si randurile sunt trimestrele
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = 'nYear' && "paginile" sunt anii
+oXtab.cRowField = '1 + FLOOR((nMonth - 1) / 3)' && randurile sunt trimestrele
+oXtab.cColField = 'cName' && coloanele sunt numele companiilor
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.cHaving = 'AVG(nInput - nOutput) < 0' && Having
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+10 Obtinerea mediilor trimestriale < 0 ale nInputs - nOutputs, dar coloanele sunt companiile si randurile sunt trimestrele, doar pentru prima companie
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = 'nYear' && "paginile" sunt anii
+oXtab.cRowField = '1 + FLOOR((nMonth - 1) / 3)' && randurile sunt trimestrele
+oXtab.cColField = 'cName' && coloanele sunt numele companiilor
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.cHaving = 'AVG(nInput - nOutput) < 0' && Having
+oXtab.cCondition = 'cName==[Company 1]'     && Where
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+

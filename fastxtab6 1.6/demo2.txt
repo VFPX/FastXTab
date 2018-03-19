@@ -1,0 +1,205 @@
+Demo 2
+A table with inputs and outputs from some companies for each month of the each year. Some values are missing
+
+RAND(-1)
+CREATE CURSOR cTest (cName C(10),nYear I,nInput N(10,2),nOutput N(10,2))
+FOR lnC=1 TO 5
+	FOR lnY=2010 TO 2014
+		INSERT INTO cTest VALUES ('Company '+TRANSFORM(m.lnC),m.lnY,100000*RAND(),100000*RAND())
+	NEXT
+NEXT
+
+BROWSE
+
+1 Get total / year (inputs)
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+2 Get average / mounth (inputs)
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+
+oXtab.nFunctionType = 3
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+3 Count the mounths with data for each company in every year (inputs)
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+
+oXtab.nFunctionType = 2
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+4 Get worst (minimum) monthly input value from each year / each company
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+
+oXtab.nFunctionType = 4
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+5 Get the best (maximum) monthly input value from each year / each company
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+
+oXtab.nFunctionType = 5
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+6 Get total / semester (inputs)
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+
+oXtab.cColField = 'PADL(nYear,4)+[_sem]+iif(nMonth<7,[1],[2])' && columns are semesters
+
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+7 Get quarterly average for nInputs - nOutputs 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+
+oXtab.cColField = 'PADL(nYear , 4) + [_qtr] + PADL(1 + FLOOR((nMonth - 1) / 3) , 1)' && columns are quarters
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+8 Get quarterly average for nInputs - nOutputs, but columns are companies, and rows are quarters
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = 'nYear' && 'pages' are years
+oXtab.cRowField = '1 + FLOOR((nMonth - 1) / 3)' && rows are quarters 
+oXtab.cColField = 'cName' && columns are company names
+
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+9 Get quarterly average for nInputs - nOutputs, columns are companies, and rows are quarters but only for quarters with results < 0
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = 'nYear' && 'pages' are years
+oXtab.cRowField = '1 + FLOOR((nMonth - 1) / 3)' && rows are quarters 
+oXtab.cColField = 'cName' && columns are company names
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.cHaving = 'AVG(nInput - nOutput) < 0' && Having
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+10 Get quarterly average for nInputs - nOutputs, columns are companies, and rows are quarters, for quarters with results < 0 but only for first company
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cPageField = 'nYear' && 'pages' are years
+oXtab.cRowField = '1 + FLOOR((nMonth - 1) / 3)' && rows are quarters 
+oXtab.cColField = 'cName' && columns are company names
+oXtab.nFunctionType = 6
+oXtab.cFunctionExp = 'AVG(nInput - nOutput)'
+
+oXtab.cHaving = 'AVG(nInput - nOutput) < 0' && Having
+oXtab.cCondition = 'cName==[Company 1]'     && Where
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+

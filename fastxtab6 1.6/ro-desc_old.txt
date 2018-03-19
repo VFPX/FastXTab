@@ -1,0 +1,65 @@
+Extinde clasa FastxTab creata de catre Alexander Golovlev.
+Clasa originala poate fi descarcata de aici http://www.universalthread.com/ViewPageNewDownload.aspx?ID=9944
+In forma "test" din proiectul "crosstab" (proiectul demonstrativ), metoda "foxite1" contine solutiile catorva probleme (enumerate la sfarsitul acestui document).
+Alte exemple sunt postate ca si comentarii in metoda "click" a butonului de comanda "cmdFastXtab".
+
+Tipurile datelor din cursorul final:
+1 Pentru EMPTY(cRowField) and nRowField=0 (distribuire pe coloane, vezi mai jos)
+- la fel ca si tipul campului initial, daca nFunctionType<>6
+- tipul de date este obtinut din rezultat, daca nFunctionType=6
+2 Pentru !EMPTY(cRowField) or nRowField<>0
+- Integer, daca nFunctionType=2 (COUNT)
+- Double precision, daca nFunctionType=3 (AVERAGE); numarul de zecimale este precizat prin intermediul proprietatii nAvePrec
+- tipul de date este obtinut din rezultat, daca nFunctionType=6 or nFunctionType=1 (pentru a evita depasirea superioara in cazul SUM)
+- la fel ca si tipul campului initial, in rest
+
+
+Proprietati noi fata de clasa originala
+- nAvePrec :		numarul de zecimala daca se foloseste functia de agregare AVE (valoare implicita=3); tipul de date este Double precision
+- cPageField :		permite precizarea campului folosit pentru pagina, fie printr-un nume de coloana, fie printr-o expresie
+- cRowField :		permite precizarea campului folosit pentru rand, fie printr-un nume de coloana, fie printr-o expresie
+- nRowField2 :		permite distribuirea specificand cRowField (si cPageField daca e necesar) pentru nRowField2=0
+- cColField :		permite precizarea campului folosit pentru coloana, fie printr-un nume de coloana, fie printr-o expresie
+- cDataField :		permite precizarea campului folosit pentru celula printr-un nume de coloana
+- nFunctionType :	functia de agregare folosita 1 Sum 2 Count 3 Avg 4 Min 5 Max 6 Custom  (implicit=1 pentru campuri numeric si implicit=5 pentru campuri nenumerice)
+- cFunctionExp :	expresia folosita in cazul nFunctionType=6
+- cCondition :		conditie WHERE
+- cHaving :		conditie HAVING
+- nMultiDataField :	daca nMultiDataField > 1 atunci pentru fiecare coloana se pot defini mai multe DataField / FunctionType / FunctionExp
+- anDataField[1],anFunctionType[1],acFunctionExp[1],acDataField[1] :
+			proprietati echivalente cu nDataField,nFunctionType,cFunctionExp,cDataField, cand nMultiDataField > 1
+Comportament suplimentar clasei originale
+- Daca EMPTY(cRowField) and nRowField=0, tabelul pivot doar distribuie valorile pe coloane, in concordanta cu cDataField, nFunctionType, cFunctionExp si cColField; (valorile nFunctionType<> 6 sunt ignorate)
+- posibilitatea folosirii functiilor de agregare pentru campuri nenumerice (1 pentru Sum si 3 pentru Avg sunt ignorate, Max este implicit)
+
+Alte imbunatatiri
+- mdot imbunatatit
+- declarare de variabile locale
+- SYS(2015) pentru numele cursoarelor interne
+
+Cateva exemple:
+1 Pentru http://www.foxite.com/archives/sql-help-0000401315.htm
+	oXTab.cRowField='cstcode'
+	oXtab.cColField = 'subj'
+	oXtab.nMultiDataField=3 
+	oXtab.acDataField[1] = 'subj'
+	oXtab.anFunctionType[1] = 2
+	oXtab.anFunctionType[2] = 6
+	oXtab.acFunctionExp[2]="SUM(IIF(attend='P',1,0))"
+	oXtab.anFunctionType[3] = 6
+	oXtab.acFunctionExp[3]="SUM(IIF(attend='P',1,0))/COUNT(attend)*100"
+2 Pentru http://www.foxite.com/archives/row-to-column-0000401353.htm
+	oXtab.nRowField = 0 
+	oXtab.cRowField = ''
+	oXtab.cColField='ids'
+	oXtab.cDataField ='qty'
+3 Pentru http://www.foxite.com/archives/split-numbers-2-0000400387.htm
+	oXtab.nRowField = 0 
+	oXtab.cRowField = ''
+	oXtab.cColField='floor(no/10)+1'
+	oXtab.cDataField ='no'
+4 Pentru http://www.foxite.com/archives/split-numbers-2-0000400495.htm
+	oXtab.nRowField = 0 
+	oXtab.cRowField = ''
+	oXtab.cColField='floor(no/100000)+1'
+	oXtab.cDataField ='no'

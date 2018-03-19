@@ -1,0 +1,65 @@
+Upgrade to the FastxTab class, created by Alexander Golovlev.
+The original class can be downloaded from http://www.universalthread.com/ViewPageNewDownload.aspx?ID=9944
+In the form "test" from the "crosstab" project (the demonstration project), the metod "foxite1" shows solutions for a few recent threads.
+Other examples are posted as comment in the "click" method of the "cmdFastXtab" command button.
+
+Resulting cursor data types:
+1 When EMPTY(cRowField) and nRowField=0 (distribution by columns)
+- same with the field type when nFunctionType<>6
+- taken from results when nFunctionType=6
+2 When !EMPTY(cRowField) or nRowField<>0
+- Integer when nFunctionType=2 (COUNT)
+- Double precision when nFunctionType=3 (AVERAGE); decimal precision given by nAvePrec property
+- taken from results when nFunctionType=6 or nFunctionType=1 (to avoid data overflow)
+- same with the field type in rest
+
+
+New properties
+- nAvePrec :		precision when using AVE function (DEFAULT=3) The data type is Double precision
+- cPageField :		allow specifying the field used for page by using either a column name, either an expression
+- cRowField :		allow specifying the field used for rows by using either a column name, either an expression
+- nRowField2 :		allow distribution by specifiyng cRowField (and cPageField if needed) when nRowField2=0
+- cColField :		allow specifying the field used for columns by using either a column name, either an expression
+- cDataField :		allow specifying the field used for cells by using a column name
+- nFunctionType :	aggregate function 1 Sum 2 Count 3 Avg 4 Min 5 Max 6 Custom  (DEFAULT=1 for numeric fields and DEFAULT=5 for nonnumeric fields)
+- cFunctionExp :	expression when nFunctionType=6
+- cCondition :		WHERE condition
+- cHaving :		HAVING condition
+- nMultiDataField :	if nMultiDataField > 1 the for each column can be defined more DataField / FunctionType / FunctionExp
+- anDataField[1],anFunctionType[1],acFunctionExp[1],acDataField[1] :
+			equivalent properties for nDataField,nFunctionType,cFunctionExp,cDataField when nMultiDataField > 1
+New behavior
+- When EMPTY(cRowField) and nRowField=0 the pivot only distribute the values by columns, according to cDataField, nFunctionType, cFunctionExp and cColField; (values for nFunctionType<> 6 are ignored)
+- permission for aggregation functions on non-numeric fields (1 for Sum and 3 for Avg are ignored, Max is by default)
+
+Other upgrades
+- improved mdot 
+- added local variables declaration
+- SYS(2015) for internal cursors name
+
+Some examples:
+1 For http://www.foxite.com/archives/sql-help-0000401315.htm
+	oXTab.cRowField='cstcode'
+	oXtab.cColField = 'subj'
+	oXtab.nMultiDataField=3 
+	oXtab.acDataField[1] = 'subj'
+	oXtab.anFunctionType[1] = 2
+	oXtab.anFunctionType[2] = 6
+	oXtab.acFunctionExp[2]="SUM(IIF(attend='P',1,0))"
+	oXtab.anFunctionType[3] = 6
+	oXtab.acFunctionExp[3]="SUM(IIF(attend='P',1,0))/COUNT(attend)*100"
+2 For http://www.foxite.com/archives/row-to-column-0000401353.htm
+	oXtab.nRowField = 0 
+	oXtab.cRowField = ''
+	oXtab.cColField='ids'
+	oXtab.cDataField ='qty'
+3 For http://www.foxite.com/archives/split-numbers-2-0000400387.htm
+	oXtab.nRowField = 0 
+	oXtab.cRowField = ''
+	oXtab.cColField='floor(no/10)+1'
+	oXtab.cDataField ='no'
+4 For http://www.foxite.com/archives/split-numbers-2-0000400495.htm
+	oXtab.nRowField = 0 
+	oXtab.cRowField = ''
+	oXtab.cColField='floor(no/100000)+1'
+	oXtab.cDataField ='no'

@@ -1,0 +1,155 @@
+Demo 1
+A table with inputs and outputs from some companies for each year.
+
+RAND(-1)
+CREATE CURSOR cTest (cName C(10),nYear I,nInput N(10,2),nOutput N(10,2))
+FOR lnC=1 TO 5
+	FOR lnY=2010 TO 2014
+		INSERT INTO cTest VALUES ('Company '+TRANSFORM(m.lnC),m.lnY,100000*RAND(),100000*RAND())
+	NEXT
+NEXT
+
+BROWSE
+
+
+1 Get inputs 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+
+oXtab.RunXtab()
+
+Result is a table with a random name
+
+2  Get inputs and show (browse) the output
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && Inputs
+
+oXtab.lBrowseAfter = .T.
+
+oXtab.RunXtab()
+
+3 Choose a name for the output table
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && Inputs
+oXtab.lBrowseAfter = .T.
+
+oXtab.cOutFile="xx" && table is named xx
+
+oXtab.RunXtab()
+
+4 Output into a cursor rather than a table
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+
+oXtab.lCursorOnly = .T.
+
+oXtab.RunXtab()
+
+5 Show null values (if exists)
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+
+oXtab.lDisplayNulls = .F.
+
+oXtab.RunXtab()
+
+6 Close the input table after run
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+
+oXtab.lCloseTable = .F.
+
+oXtab.RunXtab()
+
+7 Add a supplementary row with total
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+oXtab.cDataField = 'nInput' && cells contains Inputs
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+8 Show both nInput and nOutput 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+
+oXtab.nMultiDataField = 2
+oXtab.acDataField[1] = 'nInput' && cells contains Inputs
+oXtab.acDataField[2] = 'nOutput' && cells contains Outputs
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+9 Show three columns : nInput, nOutput and nInput - nOutput 
+Local oXtab
+oXtab = NewObject("FastXtab", "fastxtab.prg")
+
+oXtab.cRowField = 'cName' && rows are company names
+oXtab.cColField = 'nYear' && columns are years
+
+oXtab.nMultiDataField = 3
+oXtab.acDataField[1] = 'nInput' && cells contains Inputs
+oXtab.acDataField[2] = 'nOutput' && cells contains Outputs
+oXtab.anFunctionType[3] = 6
+oXtab.acFunctionExp[3] = 'SUM(nInput - nOutput)'
+
+oXtab.lBrowseAfter = .T.
+oXtab.cOutFile="xx"
+oXtab.lCursorOnly = .T.
+oXtab.lDisplayNulls = .F.
+oXtab.lCloseTable = .F.
+oXtab.lTotalRows = .T.
+
+oXtab.RunXtab()
+
+* Note the use of SUM()
