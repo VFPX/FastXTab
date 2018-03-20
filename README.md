@@ -1,6 +1,6 @@
 # FastXTab
 
-This project is an upgrade to the FastXTab class, originally created by Alexander Golovlev, by Vilhelm-Ion Praisach. The original class can be downloaded from http://www.universalthread.com/ViewPageNewDownload.aspx?ID=9944.
+This project is an upgrade to the FastXTab class, originally created by Alexander Golovlev, by [Vilhelm-Ion Praisach](https://github.com/vgulielmus). The original class can be downloaded from http://www.universalthread.com/ViewPageNewDownload.aspx?ID=9944.
 
 FastXTab is a replacement for VFPXTab which comes with VFP. It expects to find a table or cursor with at least three columns. By default, the data in the first column becomes the rows in the result, the data in the second column becomes the columns in the result, and the data in the third column is aggregated (summed, by default) to form the data in the result. VFPXTab is quite slow and has limited capabilities. FastXTab is much faster and has a lot more functionality.
 
