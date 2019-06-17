@@ -34,10 +34,6 @@
 *
 ***********************************************************************
 
-*#include FastXtabRo.h	&& Romaneste
-#include FastXtabEn.h	&& English
-*#include FastXtabRu.h	&& Russian
-
 External Array aFldArray
 
 Define Class FastXtab As Custom
@@ -78,6 +74,18 @@ PROTECTED cColumns		&& cursor for columns
 PROTECTED cRows			&& cursor for rows
 PROTECTED cPages		&& cursor for pages
 
+*** 2019-04-12 DH: add aColumns property
+dimension aColumns[1]
+
+*** 2019-04-22 DH: added nMultiRowField, anRowField, and acRowField
+nMultiRowField = 1		&& For multiple nRowField
+DIMENSION anRowField[1], acRowField[1]
+anRowField[1] = 1		&& Specifies the field position in the datasource of the cross tab row
+acRowField[1] = ""		&& Specifies the field name in the datasource of the cross tab row
+
+*** 2019-06-07 DH: added cLanguage
+cLanguage = 'EN'
+
 **********************************************************************************
 PROCEDURE nMultiDataField_assign
 	LPARAMETERS tNewValue
@@ -93,6 +101,23 @@ PROCEDURE nMultiDataField_assign
 		This.acDataField[m.lni]=This.acDataField[1]
 		This.anFunctionType[m.lni]=This.anFunctionType[1]
 		This.acFunctionExp[m.lni]=This.acFunctionExp[1]
+	NEXT
+ENDPROC
+
+*** 2019-04-22 DH: added nMultiRowField_Assign
+**********************************************************************************
+PROCEDURE nMultiRowField_Assign
+	LPARAMETERS tNewValue
+	LOCAL oldValue,lni
+	IF m.tNewValue < 1
+		RETURN
+	ENDIF
+	oldValue=This.nMultiRowField
+	DIMENSION This.anRowField[m.tNewValue], This.acRowField[m.tNewValue]
+	This.nMultiRowField=m.tNewValue
+	FOR lni=m.oldValue+1 TO m.tNewValue
+		This.anRowField[m.lni]=This.anRowField[1]
+		This.acRowField[m.lni]=This.acRowField[1]
 	NEXT
 ENDPROC
 
@@ -171,6 +196,13 @@ Function RunXtab		&& Generates a cross tab
 	LOCAL llSqlErr
 	LOCAL lnCurrTop
 	LOCAL lnNo
+*** 2019-04-23 DH: added variables
+	local lcRowGroups, ;
+		lnStart, ;
+		lcValueField, ;
+		lnColumn, ;
+		lcField, ;
+		lcValue
 	****************
 
 	*Wait Window "Running Cross Tab Query" NoWait
@@ -273,6 +305,16 @@ Function RunXtab		&& Generates a cross tab
 		NEXT
 	ENDIF
 
+*** 2019-04-22 DH: added code handling nMultiRowField
+	IF This.nMultiRowField > 1
+		FOR lni=1 TO This.nMultiRowField
+			If VARType(This.anRowField[m.lni]) != "N"
+				This.anRowField[m.lni] = 1
+			ENDIF
+		NEXT
+	ENDIF
+*** 2019-04-22 DH: end of new code
+
 	If This.lDisplayNulls
 		Set Null On
 	Else
@@ -291,7 +333,9 @@ Function RunXtab		&& Generates a cross tab
 	EndIf
 	* Check for input table properties
 	If FullPath(DefaultExt(Alias(),'DBF')) == FullPath(DefaultExt(THIS.cOutFile,'DBF'))
-		This.Alert(C_OUTPUT)
+*** 2019-06-07 DH: pass constant as string
+*		This.Alert(C_OUTPUT)
+		This.Alert('C_OUTPUT')
 		Return .F.
 	ENDIF
 
@@ -300,7 +344,8 @@ Function RunXtab		&& Generates a cross tab
 	m.numflds = AFields(InpFields)
 
 	* None of these fields are allowed to be memo fields
-	IF This.nRowField<>0 OR !EMPTY(This.cRowField) 
+*** 2019-04-22 DH: check for nMultiRowField 
+	IF This.nRowField<>0 OR !EMPTY(This.cRowField) or This.nMultiRowField > 1
 		lnGoodP=1 && Expression PageField
 		IF !EMPTY(This.cPageField)
 			IF ASCAN(InpFields,This.cPageField,-1,-1,-1,1+2+4+8)>0
@@ -319,45 +364,92 @@ Function RunXtab		&& Generates a cross tab
 		IF m.lnGoodP<>2
 			If This.nPageField > 0 
 				If InpFields[THIS.nPageField,2] $ 'MGP'
-					This.Alert(C_BADPAGEFLD)
+*** 2019-06-07 DH: pass constant as string
+*					This.Alert(C_BADPAGEFLD)
+					This.Alert('C_BADPAGEFLD')
 					Return .F.
 				ENDIF
 			EndIf
 		EndIf
 
 		lnGoodR=1 && Expression RowField
-		IF !EMPTY(This.cRowField)
-			IF ASCAN(InpFields,This.cRowField,-1,-1,-1,1+2+4+8)>0
-				THIS.nRowField=ASCAN(InpFields,This.cRowField,-1,-1,-1,1+2+4+8)
-			ELSE
-				lnGoodR=0
-				FOR lni=1 TO LEN(This.cRowField)
-					lcChar=SUBSTR(This.cRowField,m.lni,1)
-					IF NOT ISALPHA(m.lcChar) AND NOT (ISDIGIT(m.lcChar) AND m.lni>1) AND m.lcChar<>"_"
-						lnGoodR=2
-						EXIT
+*** 2019-04-22 DH: handle nMultiRowField = 1
+		IF This.nMultiRowField = 1
+*** 2019-04-22 DH: end of new code
+			IF !EMPTY(This.cRowField)
+				IF ASCAN(InpFields,This.cRowField,-1,-1,-1,1+2+4+8)>0
+					THIS.nRowField=ASCAN(InpFields,This.cRowField,-1,-1,-1,1+2+4+8)
+				ELSE
+					lnGoodR=0
+					FOR lni=1 TO LEN(This.cRowField)
+						lcChar=SUBSTR(This.cRowField,m.lni,1)
+						IF NOT ISALPHA(m.lcChar) AND NOT (ISDIGIT(m.lcChar) AND m.lni>1) AND m.lcChar<>"_"
+							lnGoodR=2
+							EXIT
+						ENDIF
+					NEXT
+				ENDIF
+			ENDIF
+			IF m.lnGoodR<>2
+				If InpFields[THIS.nRowField,2] $ 'MGP'
+*** 2019-06-07 DH: pass constant as string
+*				   This.Alert(C_BADROWFLD)
+				   This.Alert('C_BADROWFLD')
+				   Return .F.
+				ENDIF
+			ENDIF
+*** 2019-04-22 DH: set anRowField and acRowField and handle nMultiRowField > 1
+			This.anRowField[1] = This.nRowField
+			This.acRowField[1] = This.cRowField
+		ELSE
+			FOR lni=1 TO This.nMultiRowField
+				IF !EMPTY(This.acRowField[m.lni])
+					IF ASCAN(InpFields,This.acRowField[m.lni],-1,-1,-1,1+2+4+8)>0
+						THIS.anRowField[m.lni]=ASCAN(InpFields,This.acRowField[m.lni],-1,-1,-1,1+2+4+8)
+					ELSE
+						lnGoodR=0
+						FOR lni=1 TO LEN(This.acRowField[m.lni])
+							lcChar=SUBSTR(This.acRowField[m.lni],m.lni,1)
+							IF NOT ISALPHA(m.lcChar) AND NOT (ISDIGIT(m.lcChar) AND m.lni>1) AND m.lcChar<>"_"
+								lnGoodR=2
+								EXIT
+							ENDIF
+						NEXT
 					ENDIF
-				NEXT
-			ENDIF
+				ENDIF
+				IF m.lnGoodR<>2
+					If InpFields[THIS.anRowField[m.lni],2] $ 'MGP'
+*** 2019-06-07 DH: pass constant as string
+*					   This.Alert(C_BADROWFLD)
+					   This.Alert('C_BADROWFLD')
+					   Return .F.
+					ENDIF
+				ENDIF
+			NEXT
 		ENDIF
-		IF m.lnGoodR<>2
-			If InpFields[THIS.nRowField,2] $ 'MGP'
-			   This.Alert(C_BADROWFLD)
-			   Return .F.
-			ENDIF
-		ENDIF
+*** 2019-04-22 DH: end of new code
 	ENDIF
 	
-	If FCount() < 3 AND NOT (This.nRowField=0 AND EMPTY(This.cRowField)) AND NOT (This.nRowField2 = 0 AND !EMPTY(This.cRowField))
-    	This.Alert(C_NEED3FLDS)
+*** 2019-04-22 DH: handle nMultiRowField > 1
+	If FCount() < 3 AND NOT (This.nRowField=0 AND EMPTY(This.cRowField)) AND ;
+		NOT (This.nRowField2 = 0 AND !EMPTY(This.cRowField)) and ;
+		This.nMultiRowField > 1
+*** 2019-06-07 DH: pass constant as string
+*    	This.Alert(C_NEED3FLDS)
+    	This.Alert('C_NEED3FLDS')
     	Return .F.
     EndIf
 	If RecCount() = 0
-	    This.Alert(C_EMPTYDBF)
+*** 2019-06-07 DH: pass constant as string
+*	    This.Alert(C_EMPTYDBF)
+	    This.Alert('C_EMPTYDBF')
 		Return .F.
 	EndIf
 
-	IF (This.nRowField<>0 OR !EMPTY(This.cRowField)) AND (This.nRowField2<>0 OR !EMPTY(This.cRowField))
+*** 2019-04-22 DH: handle nMultiRowField > 1
+	IF (This.nRowField<>0 OR !EMPTY(This.cRowField)) AND ;
+		(This.nRowField2<>0 OR !EMPTY(This.cRowField)) and ;
+		This.nMultiRowField > 1
 		lcCondition=m.lcCondition+m.lcHaving
 	ENDIF
 
@@ -378,7 +470,9 @@ Function RunXtab		&& Generates a cross tab
 	ENDIF
 	If m.lnGood<>2 
 		IF InpFields[THIS.nColField,2] $ 'MGP' 
-		   This.Alert(C_BADCOLFLD)
+*** 2019-06-07 DH: pass constant as string
+*		   This.Alert(C_BADCOLFLD)
+		   This.Alert('C_BADCOLFLD')
 		   Return .F.
 		ENDIF
 	ENDIF
@@ -391,7 +485,9 @@ Function RunXtab		&& Generates a cross tab
 		ENDIF
 		IF This.nFunctionType < 6
 			If InpFields[THIS.nDataField,2] $ 'MGP'
-			   This.Alert(C_BADCELLFLD)
+*** 2019-06-07 DH: pass constant as string
+*			   This.Alert(C_BADCELLFLD)
+			   This.Alert('C_BADCELLFLD')
 			   Return .F.
 			ENDIF
 		EndIf
@@ -409,7 +505,9 @@ Function RunXtab		&& Generates a cross tab
 			ENDIF
 			IF This.anFunctionType[m.lni] < 6
 				If InpFields[THIS.anDataField[m.lni],2] $ 'MGP'
-				   This.Alert(C_BADCELLFLD)
+*** 2019-06-07 DH: pass constant as string
+*				   This.Alert(C_BADCELLFLD)
+				   This.Alert('C_BADCELLFLD')
 				   Return .F.
 				ENDIF
 			EndIf
@@ -496,10 +594,14 @@ Function RunXtab		&& Generates a cross tab
 
 		Do Case
 		Case _TALLY*This.nMultiDataField > 254
-			This.Alert(C_XSVALUES)
+*** 2019-06-07 DH: pass constant as string
+*			This.Alert(C_XSVALUES)
+			This.Alert('C_XSVALUES')
 			Return .F.
 		Case _TALLY = 0
-			This.Alert(C_NOCOLS)
+*** 2019-06-07 DH: pass constant as string
+*			This.Alert(C_NOCOLS)
+			This.Alert('C_NOCOLS')
 			Return .F.
 		EndCase
 
@@ -539,6 +641,10 @@ Function RunXtab		&& Generates a cross tab
 		ENDIF
 		
 		SELECT (This.cColumns)
+*** 2019-04-12 DH: initialize lnColumns
+		local lnColumns
+		lnColumn = 1
+*** 2019-04-12 DH: end of new code
 		Scan
 			FOR lni=1 TO This.nMultiDataField
 				OutFields[m.nGroupFields+This.nMultiDataField*(RECNO()-1)+m.lni,1] = This.GenName(colvalue, IIF(m.lnGood=2,-1,InpFields[This.nColField,4]))+IIF(m.lni>1,'_'+TRANSFORM(m.lni),"")
@@ -561,6 +667,11 @@ Function RunXtab		&& Generates a cross tab
 					OutFields[m.nGroupFields+This.nMultiDataField*(RECNO()-1)+m.lni,4] = InpFields[This.anDataField[m.lni],4]
 				ENDCASE
 			NEXT
+*** 2019-04-12 DH: save colvalue values into This.aColumns
+			dimension This.aColumns[lnColumn]
+			This.aColumns[lnColumn] = colvalue
+			lnColumn = lnColumn + 1
+*** 2019-04-12 DH: end of new code
 		EndScan
 
 
@@ -704,7 +815,8 @@ Function RunXtab		&& Generates a cross tab
 
 ************************************************************
 ************************************************************
-	CASE This.nRowField=0 AND EMPTY(This.cRowField) 
+*** 2019-04-22 DH: handle nMultiRowField = 0
+	CASE This.nRowField=0 AND EMPTY(This.cRowField) and This.nMultiRowField = 0
 		m.DbfName = Alias()
 		m.colfldname  = IIF(m.lnGood=1,InpFields[This.nColField,1],IIF(m.lnGood=2,This.cColField,""))
 		
@@ -754,10 +866,14 @@ Function RunXtab		&& Generates a cross tab
 		
 		Do Case
 		Case _TALLY*This.nMultiDataField > 254
-			This.Alert(C_XSVALUES)
+*** 2019-06-07 DH: pass constant as string
+*			This.Alert(C_XSVALUES)
+			This.Alert('C_XSVALUES')
 			Return .F.
 		Case _TALLY = 0
-			This.Alert(C_NOCOLS)
+*** 2019-06-07 DH: pass constant as string
+*			This.Alert(C_NOCOLS)
+			This.Alert('C_NOCOLS')
 			Return .F.
 		EndCase
 
@@ -765,6 +881,10 @@ Function RunXtab		&& Generates a cross tab
 		Dimension OutFields[_TALLY*This.nMultiDataField,4]
 		
 		SELECT (This.cColumns)
+*** 2019-04-12 DH: initialize lnColumns
+		local lnColumns
+		lnColumn = 1
+*** 2019-04-12 DH: end of new code
 		Scan
 			FOR lni=1 TO This.nMultiDataField
 				OutFields[This.nMultiDataField*(RECNO()-1)+m.lni,1] = This.GenName(colvalue, IIF(m.lnGood=2,-1,InpFields[This.nColField,4]))+'_'+TRANSFORM(m.lni)
@@ -778,6 +898,11 @@ Function RunXtab		&& Generates a cross tab
 					OutFields[This.nMultiDataField*(RECNO()-1)+m.lni,4] = InpFields[This.anDataField[m.lni],4]
 				ENDIF
 			NEXT
+*** 2019-04-12 DH: save colvalue values into This.aColumns
+			dimension This.aColumns[lnColumn]
+			This.aColumns[lnColumn] = colvalue
+			lnColumn = lnColumn + 1
+*** 2019-04-12 DH: end of new code
 		EndScan
 		
 		This.CheckNames(@OutFields)
@@ -810,6 +935,10 @@ Function RunXtab		&& Generates a cross tab
 		APPEND FROM ARRAY laTempArr FIELDS &replcolumn
 		
 		SELECT (This.cColumns)
+*** 2019-04-12 DH: initialize lnColumns
+		local lnColumns
+		lnColumn = 1
+*** 2019-04-12 DH: end of new code
 		SCAN
 			IF colvalue==lColMax
 				LOOP
@@ -828,6 +957,11 @@ Function RunXtab		&& Generates a cross tab
 			GO TOP
 			REPLACE ALL &replcolumn WHILE RECNO()<=ALEN(laTempArr,1)
 			SELECT (This.cColumns)
+*** 2019-04-12 DH: save colvalue values into This.aColumns
+			dimension This.aColumns[lnColumn]
+			This.aColumns[lnColumn] = colfldvalue
+			lnColumn = lnColumn + 1
+*** 2019-04-12 DH: end of new code
 		ENDSCAN
 
 		Select (m.cOutStem)
@@ -845,22 +979,46 @@ Function RunXtab		&& Generates a cross tab
 ***************************************		
 	OTHERWISE
 		m.DbfName = Alias()
-		m.rowfldname = IIF(m.lnGoodR=1,InpFields[This.nRowField,1],IIF(m.lnGoodR=2,This.cRowField,""))
+*** 2019-04-22 DH: handle nMultiRowField > 1
+		if This.nMultiRowField > 1
+			rowfldname = ''
+			rowfldvalue = ''
+			lcRowGroups = ''
+			for lnI = 1 to This.nMultiRowField
+				rowfldname = m.rowfldname + iif(empty(m.rowfldname), '', ',') + ;
+					IIF(m.lnGoodR=1,InpFields[This.anRowField[lnI],1],IIF(m.lnGoodR=2,This.acRowField[lnI],"")) + ;
+					' as rowfld' + transform(lnI)
+				rowfldvalue = m.rowfldvalue + iif(empty(m.rowfldvalue), '', ',') + ;
+					'rowfld' + transform(lnI) + ' as rowvalue' + transform(lnI)
+				lcRowGroups = lcRowGroups + iif(empty(lcRowGroups), '', ',') + ;
+					transform(lnI)
+			next
+		else
+			m.rowfldname = IIF(m.lnGoodR=1,InpFields[This.nRowField,1],IIF(m.lnGoodR=2,This.cRowField,"")) + ;
+				' as rowfld'
+		endif
+*** 2019-04-22 DH: end of added code
 		m.colfldname  = IIF(m.lnGood=1,InpFields[This.nColField,1],IIF(m.lnGood=2,This.cColField,""))
 
 		lcSql='Select '
 		If This.nPageField > 0 OR m.lnGoodP=2
 			m.pagefldname = IIF(m.lnGoodP=1,InpFields[This.nPageField,1],IIF(m.lnGoodP=2,This.cPageField,""))
-			nGroupFields = 2
-			lcGrup = '1,2,3'
+*** 2019-04-22 DH: moved code setting lcGrup after ENDIF
+			nGroupFields = This.nMultiRowField + 1
 			lcSql=m.lcSql+m.pagefldname+' as pagefld,'
 		Else
-			nGroupFields = 1
-			lcGrup = '1,2'
+*** 2019-04-22 DH: moved code setting lcGrup after ENDIF
+			nGroupFields = This.nMultiRowField
 		ENDIF
+* 2019-04-22 DH: moved code here plus handled nMultiRowField > 1
+		lcGrup = ''
+		for lnI = 1 to nGroupFields + 1
+			lcGrup = lcGrup + iif(empty(lcGrup), '', ',') + transform(lnI)
+		next
 
 		*************************
-		lcSql=m.lcSql+m.rowfldname+' as rowfld,'+m.colfldname+' as colfld'
+*** 2019-04-22 DH: removed "as rowfld" since now in rowfldname
+		lcSql=m.lcSql+m.rowfldname+','+m.colfldname+' as colfld'
 		
 		FOR lni=1 TO This.nMultiDataField
 			IF !EMPTY(This.acDataField[m.lni])
@@ -893,7 +1051,6 @@ Function RunXtab		&& Generates a cross tab
 			lcSql=m.lcSql+m.lcRightPar+' As cellfld'+TRANSFORM(m.lni)
 		NEXT
 		lcSql=m.lcSql+' From '+m.DbfName+' Group by '+m.lcGrup+m.lcCondition+' Into Cursor '+This.cCells
-		
 		IF VERSION(5)>=800
 			llSqlErr=.F.
 			TRY
@@ -918,8 +1075,16 @@ Function RunXtab		&& Generates a cross tab
 			=AFIELDS(laPages,This.cPages)
 		ENDIF
 		* Generate rows names
-		Select Distinct rowfld as rowvalue From (This.cCells) Group by 1 Into Cursor (This.cRows)
-		Index On rowvalue Tag rowvalue
+*** 2019-04-22: handle nMultiRowField > 1
+		if This.nMultiRowField > 1
+			select distinct &rowfldvalue from (This.cCells) group by &lcRowGroups ;
+				order by &lcRowGroups Into Cursor (This.cRows)
+		else
+*** 2019-04-22: end of new code
+			Select Distinct rowfld as rowvalue From (This.cCells) Group by 1 Into Cursor (This.cRows)
+			Index On rowvalue Tag rowvalue
+*** 2019-04-22: added ENDIF
+		endif
 		=AFIELDS(laRows,This.cRows)
 		* Generate column names
 		Select Distinct colfld as colvalue From (This.cCells) Group by 1 Into Cursor (This.cColumns)
@@ -927,16 +1092,23 @@ Function RunXtab		&& Generates a cross tab
 
 		Do Case
 		Case _TALLY*This.nMultiDataField > 254
-			This.Alert(C_XSVALUES)
+*** 2019-06-07 DH: pass constant as string
+*			This.Alert(C_XSVALUES)
+			This.Alert('C_XSVALUES')
 			Return .F.
 		Case _TALLY = 0
-			This.Alert(C_NOCOLS)
+*** 2019-06-07 DH: pass constant as string
+*			This.Alert(C_NOCOLS)
+			This.Alert('C_NOCOLS')
 			Return .F.
 		EndCase
 
 		* Create output table
 		Dimension OutFields[m.nGroupFields+_TALLY*This.nMultiDataField,4]
 		* Page and Row fields are the same as in input table
+*** 2019-04-22 DH: set lnStart
+		lnStart = 1
+*** 2019-04-22 DH: end of new code
 		If This.nPageField > 0 OR m.lnGoodP=2
 			IF m.lnGoodP=2
 				SELECT (This.cPages)
@@ -951,25 +1123,55 @@ Function RunXtab		&& Generates a cross tab
 				OutFields[1,3] = InpFields[This.nPageField,3]
 				OutFields[1,4] = InpFields[This.nPageField,4]
 			ENDIF
+*** 2019-04-22 DH: set lnStart
+			lnStart = 2
 		ENDIF
-		IF m.lnGoodR=2
-			SELECT (This.cRows)
-			rowfldname=This.GenName(rowvalue, laRows[1,4])
-			If This.nPageField > 0 OR m.lnGoodP=2 AND m.pagefldname==m.rowfldname
-				rowfldname=m.rowfldname+'_1'
+*** 2019-04-22 DH: handle nMultiRowField > 1
+		if This.nMultiRowField > 1
+			for lnI = 1 to This.nMultiRowField
+				IF m.lnGoodR=2
+					SELECT (This.cRows)
+					lcValueField = 'rowvalue' + transform(lnI)
+					rowfldname=This.GenName(&lcValueField, laRows[lnI,4])
+					If This.nPageField > 0 OR m.lnGoodP=2 AND m.pagefldname==m.rowfldname
+						rowfldname=m.rowfldname+'_1'
+					ENDIF
+					OutFields[m.lnStart + m.lnI - 1,1] = m.rowfldname
+					OutFields[m.lnStart + m.lnI - 1,2] = laRows[1,2]
+					OutFields[m.lnStart + m.lnI - 1,3] = laRows[1,3]
+					OutFields[m.lnStart + m.lnI - 1,4] = laRows[1,4]
+				ELSE
+					OutFields[m.lnStart + m.lnI - 1,1] = InpFields[This.anRowField[m.lnI],1]
+					OutFields[m.lnStart + m.lnI - 1,2] = InpFields[This.anRowField[m.lnI],2]
+					OutFields[m.lnStart + m.lnI - 1,3] = InpFields[This.anRowField[m.lnI],3]
+					OutFields[m.lnStart + m.lnI - 1,4] = InpFields[This.anRowField[m.lnI],4]
+				ENDIF
+			next
+		else
+*** 2019-04-22 DH: end of new code
+			IF m.lnGoodR=2
+				SELECT (This.cRows)
+				rowfldname=This.GenName(rowvalue, laRows[1,4])
+				If This.nPageField > 0 OR m.lnGoodP=2 AND m.pagefldname==m.rowfldname
+					rowfldname=m.rowfldname+'_1'
+				ENDIF
+				OutFields[m.nGroupFields,1] = m.rowfldname
+				OutFields[m.nGroupFields,2] = laRows[1,2]
+				OutFields[m.nGroupFields,3] = laRows[1,3]
+				OutFields[m.nGroupFields,4] = laRows[1,4]
+			ELSE
+				OutFields[m.nGroupFields,1] = InpFields[This.nRowField,1]
+				OutFields[m.nGroupFields,2] = InpFields[This.nRowField,2]
+				OutFields[m.nGroupFields,3] = InpFields[This.nRowField,3]
+				OutFields[m.nGroupFields,4] = InpFields[This.nRowField,4]
 			ENDIF
-			OutFields[m.nGroupFields,1] = m.rowfldname
-			OutFields[m.nGroupFields,2] = laRows[1,2]
-			OutFields[m.nGroupFields,3] = laRows[1,3]
-			OutFields[m.nGroupFields,4] = laRows[1,4]
-		ELSE
-			OutFields[m.nGroupFields,1] = InpFields[This.nRowField,1]
-			OutFields[m.nGroupFields,2] = InpFields[This.nRowField,2]
-			OutFields[m.nGroupFields,3] = InpFields[This.nRowField,3]
-			OutFields[m.nGroupFields,4] = InpFields[This.nRowField,4]
-		ENDIF
+*** 2019-04-22 DH: ENDIF for nMultiRowField > 1
+		endif
 		
 		SELECT (This.cColumns)
+*** 2019-04-12 DH: initialize lnColumn
+		lnColumn = 1
+*** 2019-04-12 DH: end of new code
 		Scan
 			FOR lni=1 TO This.nMultiDataField
 				OutFields[m.nGroupFields+This.nMultiDataField*(RECNO()-1)+m.lni,1] = This.GenName(colvalue, IIF(m.lnGood=2,-1,InpFields[This.nColField,4]))+IIF(m.lni>1,'_'+TRANSFORM(m.lni),"")
@@ -992,6 +1194,11 @@ Function RunXtab		&& Generates a cross tab
 					OutFields[m.nGroupFields+This.nMultiDataField*(RECNO()-1)+m.lni,4] = InpFields[This.anDataField[m.lni],4]
 				ENDCASE
 			NEXT
+*** 2019-04-12 DH: save colvalue values into This.aColumns
+			dimension This.aColumns[lnColumn]
+			This.aColumns[lnColumn] = colvalue
+			lnColumn = lnColumn + 1
+*** 2019-04-12 DH: end of new code
 		EndScan
 		
 		This.CheckNames(@OutFields)
@@ -1011,17 +1218,53 @@ Function RunXtab		&& Generates a cross tab
 		* Fill the output table
 		Select (This.cCells)
 		If This.nPageField > 0 OR m.lnGoodP=2
-			pagefldvalue = pagefld 
-			rowfldvalue = rowfld 
-			Insert Into (m.cOutStem) ((pagefldname), (rowfldname)) Values (m.pagefldvalue, m.rowfldvalue)
+			pagefldvalue = pagefld
+*** 2019-04-22 DH: handle nMultiRowField > 1
+			insert into (m.cOutStem) ((pagefldname)) values (m.pagefldvalue)
+			rowfldvalue = ''
+			for lnI = 1 to This.nMultiRowField
+				lcField = InpFields[This.anRowField[m.lnI], 1]
+				if This.nMultiRowField = 1
+					lcValue = rowfld
+				else
+					lcValue = evaluate('rowfld' + transform(lnI))
+				endif
+				rowfldvalue = rowfldvalue + iif(empty(rowfldvalue), '', ',') + ;
+					lcValue
+				replace (lcField) with lcValue in (m.cOutStem)
+			next
+*** 2019-04-22 DH: end of modified code
 			Scan
 				pagefldvalue2 = pagefld 
-				rowfldvalue2 = rowfld 
 				colfldvalue=colfld 
+*** 2019-04-22 DH: handle nMultiRowField > 1
+				rowfldvalue2 = ''
+				for lnI = 1 to This.nMultiRowField
+					lcField = InpFields[This.anRowField[m.lnI], 1]
+					if This.nMultiRowField = 1
+						lcValue = rowfld
+					else
+						lcValue = evaluate('rowfld' + transform(lnI))
+					endif
+					rowfldvalue2 = rowfldvalue2 + iif(empty(rowfldvalue2), '', ',') + ;
+						lcValue
+				next
+*** 2019-04-22 DH: end of modified code
 				If (m.pagefldvalue != m.pagefldvalue2) or (m.rowfldvalue != m.rowfldvalue2)
 					pagefldvalue = m.pagefldvalue2 
 					rowfldvalue = m.rowfldvalue2 
-					Insert Into (m.cOutStem) ((pagefldname), (rowfldname)) Values (m.pagefldvalue, m.rowfldvalue)
+*** 2019-04-22 DH: handle nMultiRowField > 1
+					Insert Into (m.cOutStem) ((pagefldname)) Values (m.pagefldvalue)
+					for lnI = 1 to This.nMultiRowField
+						lcField = InpFields[This.anRowField[m.lnI], 1]
+						if This.nMultiRowField = 1
+							lcValue = rowfld
+						else
+							lcValue = evaluate('rowfld' + transform(lnI))
+						endif
+						replace (lcField) with lcValue in (m.cOutStem)
+					next
+*** 2019-04-22 DH: end of modified code
 				EndIf
 
 				* Translate a field value of any type into a column field name
@@ -1033,14 +1276,56 @@ Function RunXtab		&& Generates a cross tab
 				NEXT
 			EndScan
 		Else
-			rowfldvalue = rowfld 
-			Insert Into (m.cOutStem) ((rowfldname)) Values (m.rowfldvalue)
+*** 2019-04-22 DH: handle nMultiRowField > 1
+			rowfldvalue = ''
+			for lnI = 1 to This.nMultiRowField
+				lcField = InpFields[This.anRowField[m.lnI], 1]
+				if This.nMultiRowField = 1
+					lcValue = rowfld
+				else
+					lcValue = evaluate('rowfld' + transform(lnI))
+				endif This.nMultiRowField > 1
+				rowfldvalue = rowfldvalue + iif(empty(rowfldvalue), '', ',') + ;
+					lcValue
+				if lnI = 1
+					insert into (m.cOutStem) ((lcField)) values (lcValue)
+				else
+					replace (lcField) with lcValue in (m.cOutStem)
+				endif
+			next
+*** 2019-04-22 DH: end of modified code
 			Scan
-				rowfldvalue2 = rowfld 
+*** 2019-04-22 DH: handle nMultiRowField > 1
+				rowfldvalue2 = ''
+				for lnI = 1 to This.nMultiRowField
+					lcField = InpFields[This.anRowField[m.lnI], 1]
+					if This.nMultiRowField = 1
+						lcValue = rowfld
+					else
+						lcValue = evaluate('rowfld' + transform(lnI))
+					endif
+					rowfldvalue2 = rowfldvalue2 + iif(empty(rowfldvalue2), '', ',') + ;
+						lcValue
+				next
+*** 2019-04-22 DH: end of modified code
 				colfldvalue=colfld 
 				If m.rowfldvalue != m.rowfldvalue2
 					rowfldvalue = m.rowfldvalue2 
-					Insert Into (m.cOutStem) ((rowfldname)) Values (m.rowfldvalue)
+*** 2019-04-22 DH: handle nMultiRowField > 1
+					for lnI = 1 to This.nMultiRowField
+						lcField = InpFields[This.anRowField[m.lnI], 1]
+						if This.nMultiRowField = 1
+							lcValue = rowfld
+						else
+							lcValue = evaluate('rowfld' + transform(lnI))
+						endif
+						if lnI = 1
+							insert into (m.cOutStem) ((lcField)) values (lcValue)
+						else
+							replace (lcField) with lcValue in (m.cOutStem)
+						endif
+					next
+*** 2019-04-22 DH: end of modified code
 				EndIf
 
 				* Translate a field value of any type into a column field name
@@ -1145,7 +1430,9 @@ Protected Function GenName(in_name, in_dec)
 		m.RetVal = IIf(m.in_name, 'True', 'False')
 	Otherwise
 		* Should never happen
-		This.Alert(C_UNKNOWNFLD)
+*** 2019-06-07 DH: pass constant as string
+*		This.Alert(C_UNKNOWNFLD)
+		This.Alert('C_UNKNOWNFLD')
 		Return "Unknown"
 	EndCase
 
@@ -1188,17 +1475,77 @@ Protected Function FldUnique(aFldArray, cCheckValue, nPos)
 	Return .T.
 EndFunc
 
-Procedure Error(nError, cMethod, nLine)
-This.Alert("Line: "+AllTrim(Str(m.nLine))+Chr(13) ;
+*** 2019-04-22 DH: comment out Error method so caller's error handler is used
+*Procedure Error(nError, cMethod, nLine)
+*This.Alert("Line: "+AllTrim(Str(m.nLine))+Chr(13) ;
 	   +"Program: "+m.cMethod+Chr(13) ;
 	   +"Error: "+AllTrim(Str(nError))+Chr(13) ;
 	   +"Message: "+Message()+Chr(13);
 	   +"Code: "+Message(1))
-   Return To RunXtab
-ENDPROC
+*   Return To RunXtab
+*ENDPROC
 
 Protected Procedure Alert(strg)
-	MessageBox(m.strg, 16, "FastXtab")
+*** 2019-06-07 DH: handle string as lookup
+*	MessageBox(m.strg, 16, "FastXtab")
+	local lcMessage
+	lcMessage = This.GetMessage(m.strg)
+	MessageBox(m.lcMessage, 16, "FastXtab")
 EndProc
 
+*** 2019-06-07 DH: added this method. Strings came from FastXTabEN.h and FastXTabRO.H.
+protected procedure GetMessage(tcMessage)
+	do case
+		case This.cLanguage = 'EN' and tcMessage = 'C_LOCATEDBF'
+			return "Please locate the input database:"
+		case This.cLanguage = 'EN' and tcMessage = 'C_OUTPUT'
+			return "The input and output databases must be different."
+		case This.cLanguage = 'EN' and tcMessage = 'C_NEED3FLDS'
+			return "Crosstab input databases require at least three fields"
+		case This.cLanguage = 'EN' and tcMessage = 'C_EMPTYDBF'
+			return "Cannot prepare crosstab on empty database"
+		case This.cLanguage = 'EN' and tcMessage = 'C_BADPAGEFLD'
+			return "The crosstab page field in the input database cannot be a memo, general or picture field."
+		case This.cLanguage = 'EN' and tcMessage = 'C_BADROWFLD'
+			return "The crosstab row field in the input database cannot be a memo, general or picture field."
+		case This.cLanguage = 'EN' and tcMessage = 'C_BADCOLFLD'
+			return "The crosstab column field in the input database cannot be a memo, general or picture field."
+		case This.cLanguage = 'EN' and tcMessage = 'C_BADCELLFLD'
+			return "The crosstab cell field in the input database cannot be a memo, general or picture field."
+		case This.cLanguage = 'EN' and tcMessage = 'C_NOCOLS'
+			return "No columns found."
+		case This.cLanguage = 'EN' and tcMessage = 'C_XSVALUES'
+			return "There are too many unique values for column field. The maximum is 254."
+		case This.cLanguage = 'EN' and tcMessage = 'C_UNKNOWNFLD'
+			return "Unknown field type."
+
+		case This.cLanguage = 'RO' and tcMessage = 'C_LOCATEDBF'
+			return "Va rog sa precizati tabelul:"
+		case This.cLanguage = 'RO' and tcMessage = 'C_OUTPUT'
+			return "Numele tabelului de intrare trebuie sa fie diferit cu al celui de iesire."
+		case This.cLanguage = 'RO' and tcMessage = 'C_NEED3FLDS'
+			return "Tabelul de intrare trebuie sa contina cel putin trei campuri"
+		case This.cLanguage = 'RO' and tcMessage = 'C_EMPTYDBF'
+			return "Nu se poate face pivot asupra dintr-un tabel gol"
+		case This.cLanguage = 'RO' and tcMessage = 'C_BADPAGEFLD'
+			return "Campul pentru pagina nu poate fi memo, general or picture field."
+		case This.cLanguage = 'RO' and tcMessage = 'C_BADROWFLD'
+			return "Campul pentru rand nu poate fi memo, general or picture field."
+		case This.cLanguage = 'RO' and tcMessage = 'C_BADCOLFLD'
+			return "Campul pentru coloana nu poate fi memo, general or picture field."
+		case This.cLanguage = 'RO' and tcMessage = 'C_BADCELLFLD'
+			return "Campul pentru celula nu poate fi memo, general or picture field."
+		case This.cLanguage = 'RO' and tcMessage = 'C_NOCOLS'
+			return "Nici o coloana."
+		case This.cLanguage = 'RO' and tcMessage = 'C_XSVALUES'
+			return "Prea multe valori unice pentru campul coloane. Maximum este 254."
+		case This.cLanguage = 'RO' and tcMessage = 'C_UNKNOWNFLD'
+			return "Tip de data necunoscut."
+
+* Note: messages in FastXTabRU.h weren't added here because of code page issues.
+
+		otherwise
+			return tcMessage
+	endcase
+endproc
 EndDefine
